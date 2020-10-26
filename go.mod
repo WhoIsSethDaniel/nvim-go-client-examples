@@ -1,0 +1,5 @@
+module github.com/WhoIsSethDaniel/nvim-go-client-examples
+
+go 1.15
+
+require github.com/neovim/go-client v1.1.2
