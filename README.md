@@ -111,9 +111,9 @@ The go-plugin code uses the default Go logger. In go-plugin/nvim/plugin/main.go 
 ```
 So the first few lines in the example code's main() function do just this:
 ```
-	// create a log to log to right away. It will help with debugging
-	l, _ := os.Create("nvim-go-client-example.log")
-	log.SetOutput(l)
+  // create a log to log to right away. It will help with debugging
+  l, _ := os.Create("nvim-go-client-example.log")
+  log.SetOutput(l)
 ```
 This is pretty straightforward. Create a file to log to and set the output to log to that file. The
 go-plugin code doesn't perform a lot of logging so I have found this mostly useful for debugging my
@@ -132,9 +132,9 @@ Regardless of what I said above these examples show you how to create commands a
 
 The code main calls plugin.Main().
 ```
-	plugin.Main(func(p *plugin.Plugin) error {
-      ...
-    }
+  plugin.Main(func(p *plugin.Plugin) error {
+    ...
+  }
 ```
 This method does a number of things. It creates the basic flags (-manifest and -location) using the flag package and
 runs the passed in p function. The p function is expected to have code that creates handlers for commands, autocommands,
@@ -149,11 +149,11 @@ are exported. So you either have to write new ones or copy and paste the ones in
 #### Commands
 The first thing the p function does is use p.HandleComamnd() to create a new command:
 ```
-		p.HandleCommand(&plugin.CommandOptions{Name: "ExCmd", NArgs: "?", Bang: true, Eval: "[getcwd(),bufname()]"},
-			func(args []string, bang bool, eval *cmdEvalExample) {
-				log.Print("called command ExCmd")
-				exCmd(p, args, bang, eval)
-			})
+  p.HandleCommand(&plugin.CommandOptions{Name: "ExCmd", NArgs: "?", Bang: true, Eval: "[getcwd(),bufname()]"},
+      func(args []string, bang bool, eval *cmdEvalExample) {
+          log.Print("called command ExCmd")
+          exCmd(p, args, bang, eval)
+      })
 ```
 p.HandleCommand() takes two arguments. The first is a pointer to a plugin.CommandOptions struct and the second
 is a function that implements the functionality for the new command.
@@ -188,10 +188,10 @@ and also current directory and a buffer name (in this case the buffer name was e
 
 If we look closer at the second argument to p.HandleCommand():
 ```
-			func(args []string, bang bool, eval *cmdEvalExample) {
-				log.Print("called command ExCmd")
-				exCmd(p, args, bang, eval)
-			})
+  func(args []string, bang bool, eval *cmdEvalExample) {
+      log.Print("called command ExCmd")
+      exCmd(p, args, bang, eval)
+  })
 ```
 we can see that the code is using an anonymous function to handle the arguments, log the use of 'ExCmd', and also 
 call another function. The anonymous function is useful because it creates a closure that can be used to pass 
@@ -207,10 +207,10 @@ The second argument is 'bang' and it is typed as a bool. It simply lets us know 
 
 The third argument is 'eval' and it is a pointer to a struct. That struct is defined in commands.go and looks like:
 ```
-type cmdEvalExample struct {
-	Cwd     string `msgpack:",array"`
-	Bufname string
-}
+  type cmdEvalExample struct {
+      Cwd     string `msgpack:",array"`
+      Bufname string
+  }
 ```
 The fields in the struct match up with the expression given in the 'Eval' field. Notice that the 'Eval' field is 
 vimscript surrounded by quotes. The vimscript is a list with two fields, each field being the result of an expression.
