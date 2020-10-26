@@ -13,6 +13,23 @@ func main() {
 	log.SetOutput(l)
 
 	plugin.Main(func(p *plugin.Plugin) error {
+		// Commands
+		p.HandleCommand(&plugin.CommandOptions{Name: "ExCmd", NArgs: "?", Bang: true, Eval: "[getcwd(),bufname()]"},
+			func(args []string, bang bool, eval *cmdEvalExample) {
+				log.Print("called command ExCmd")
+				exCmd(p, args, bang, eval)
+			})
+
+		// AutoCommands
+		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
+			func() {
+				log.Print("Just entered a buffer")
+			})
+		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufAdd", Group: "ExmplNvGoClientGrp", Pattern: "*", Eval: "*"},
+			func(eval *autocmdEvalExample) {
+				log.Printf("buffer has cwd: %s", eval.Cwd)
+			})
+
 		// Functions
 		p.HandleFunction(&plugin.FunctionOptions{Name: "Upper"},
 			func(args []string) (string, error) {
@@ -40,22 +57,6 @@ func main() {
 				return showfirst(p), nil
 			})
 
-		// AutoCommands
-		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
-			func() {
-				log.Print("Just entered a buffer")
-			})
-		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufAdd", Group: "ExmplNvGoClientGrp", Pattern: "*", Eval: "*"},
-			func(eval *autocmdEvalExample) {
-				log.Printf("buffer has cwd: %s", eval.Cwd)
-			})
-
-		// Commands
-		p.HandleCommand(&plugin.CommandOptions{Name: "ExCmd", NArgs: "?", Bang: true, Eval: "[getcwd(),bufname()]"},
-			func(args []string, bang bool, eval *cmdEvalExample) {
-				log.Print("called command ExCmd")
-				exCmd(p, args, bang, eval)
-			})
 		return nil
 	})
 }
