@@ -1,8 +1,11 @@
 # nvim-go-client-examples
 Examples of using the nvim [go client](https://github.com/neovim/go-client) and documentation for the client.
 
-This file, the code, and the comments in the code are intended to help those who are interested in using Go to
-write plugins for Neovim. 
+This file, the code, and the comments in the code are intended to help those who are interested in using Go to write
+plugins for Neovim. Please do not take this document as absolute fact. I have done my best to document what I have
+discovered by experimentation and reading the code, but it is very likely at least a few things I write here aren't 100%
+accurate. I accept patches to the documentation and to the example code. My hope is to make this document as accurate
+and as useful as possible.
 
 ## Disclaimer(s)
 * This is not intended to be a complete guide to all things [go-client](https://github.com/neovim/go-client). The api
@@ -212,10 +215,10 @@ The third argument is 'eval' and it is a pointer to a struct. That struct is def
       Bufname string
   }
 ```
-The fields in the struct match up with the expression given in the 'Eval' field. Notice that the 'Eval' field is 
-vimscript surrounded by quotes. The vimscript is a list with two fields, each field being the result of an expression.
-The first expression is getcwd() and the second expression is bufname(). Note the field tag in the cmdEvalExample struct
-definition. This works hand-in-hand with what is in Eval.
+The fields in the struct match up with the expression given in the 'Eval' field for plugin.CommandOptions. Notice that
+the 'Eval' field is vimscript surrounded by quotes. The vimscript is a list with two fields, each field being the result
+of an expression. The first expression is getcwd() and the second expression is bufname(). Note the field tag in the
+cmdEvalExample struct definition. This works hand-in-hand with what is in Eval.
 
 How does go-plugin map the defined fields in plugin.CommandOptions to the arguments in the function? It appears to
 assume that the function will take the argument in the order they are defined in the plugin.CommandOptions struct. 
@@ -228,5 +231,81 @@ I haven't tried every possible combination but this seems to be the case. This i
 haven't examined thoroughly yet.
 
 #### Autocommands
+The example code creates two new autocommands. It does this using p.HandleAutocmd like so:
+```
+  p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
+      func() {
+          log.Print("Just entered a buffer")
+      })
+  p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufAdd", Group: "ExmplNvGoClientGrp", Pattern: "*", Eval: "*"},
+      func(eval *autocmdEvalExample) {
+          log.Printf("buffer has cwd: %s", eval.Cwd)
+      })
+```
+It's very similar to how commands are defined. Instead of calling p.HandleCommand it calls p.HandleAutocmd. Instead
+of filling in a plugin.CommandOptions struct it fills in a plugin.AutocmdOptions struct (you can see the fields in
+go-plugin/nvim/plugin/plugin.go). There are fewer fields for defining autocommands, but, like commands, they matchup
+exactly with what you would use if you were defining the autocommand in vimscript. The fields available are:
+Event, Group, Pattern, Nested, Eval. For more details on how autocommands are defined in vimscript see :help
+autocommand.
+
+My experimentation showed that if you define more than one autocommand in the same Event the manifest will be screwed
+up. So two (or more) autocommands in event "BufEnter" seemed to cause a problem. However if one autocommand was in 
+event "BufEnter,BufLeave" and the other was in "BufEnter" there were no problems. This brings up something that I 
+don't show in the example code: the Event field can list more than one event. This maps exactly to how autocommands are
+defined in vimscript, but may not be obvious from the examples I have provided.
+
+The first autocommand created is very simple:
+```
+  p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
+      func() {
+          log.Print("Just entered a buffer")
+      })
+```
+This will simply log that a buffer was entered into whenever that event is fired by Neovim. In fact, we have 
+already seen this autocommand in action. If you go back and look at the log file excerpt in the previous section
+you will see a line that says:
+```
+Just entered a buffer
+```
+That log entry was created by this autocommand.
+
+The Group field is the same as the group you would use in a vimscript autocommand definition. The Pattern field is 
+the same as the pattern you would pass to :autocommand in Neovim. i.e. it can be "\*.go" if you only want the autocommand
+to work for Go files.
+
+The second autocommand definition is:
+```
+  p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufAdd", Group: "ExmplNvGoClientGrp", Pattern: "*", Eval: "*"},
+      func(eval *autocmdEvalExample) {
+          log.Printf("buffer has cwd: %s", eval.Cwd)
+      })
+```
+This definition includes an Eval section and also has an argument that is passed to the anonymous function. The Eval,
+and how it works, is very similar to what was described above for the definition of the command. However, in this case,
+the Eval is simply an asterisk. What does this mean? Let's look at the definition for the autocmdEvalExample struct:
+```
+type autocmdEvalExample struct {
+	Cwd string `eval:"getcwd()"`
+}
+```
+The field tag is now different. It now describes, directly, that the value of the given expression should be stored 
+in the field. So, above, the value of the "getcwd()" vimscript expression should be stored in the Cwd field. You can
+have multiple fields and each one can have different expressions. This is what the asterisk means in the Eval field
+above. Here is an example of a struct with multiple fields, each field with its own expression:
+```
+type multiExprExample struct {
+	Cwd string `eval:"getcwd()"`
+    Name string `eval:"bufname()"`
+    Id int `eval:"bufnr()"`
+}
+```
+You can see the result from the second autocommand if you fire up Neovim and create a new buffer. You can then look
+at the log file and see an entry that looks like:
+```
+Just entered a buffer
+buffer has cwd: /home/seth
+Just entered a buffer
+```
 
 #### Functions
