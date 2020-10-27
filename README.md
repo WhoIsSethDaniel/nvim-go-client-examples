@@ -134,7 +134,7 @@ A slight tangent to editorialize:
 
 Regardless of what I said above these examples show you how to create commands and autocommands using Go.
 
-The code main calls plugin.Main().
+The code in main calls plugin.Main().
 ```go
   plugin.Main(func(p *plugin.Plugin) error {
     ...
@@ -148,7 +148,8 @@ to and from Neovim. The Serve() method blocks forever.
 As you get more comfortable with using go-plugin you may not want to continue to use Main(). Main() seems more like a
 convenience function that does the bare minimum a good host should do. The only problem with not using the Main() method
 is that it uses several useful helper functions to write out the manifest. Unfortunately neither of these helper methods
-are exported. So you either have to write new ones or copy and paste the ones in the source to your code.
+are exported. So you either have to write new ones or copy and paste the ones in the source to your code. See
+go-plugin/nvim/plugin/main.go to view the code for Main().
 
 #### Commands
 The first thing the p function does is use p.HandleComamnd() to create a new command:
@@ -370,6 +371,7 @@ calling Upper
 ```
 Feel free to also run UpperCwd and ShowThings. Look at the code, see what each one does, and then run it.
 
+#### NVim API
 The 'GetVV' function does something a little interesting. It uses the nvim API provided by go-plugin. The nvim API is
 pretty large, but you can look at it using go doc:
 ```
