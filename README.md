@@ -113,12 +113,12 @@ the msgpack encoding/decoding fails. Later on we can induce some errors and see 
 
 ### main.go
 The go-plugin code uses the default Go logger. In go-plugin/nvim/plugin/main.go there is a comment:
-```
+```go
 // Applications should use the default logger in the standard log package to
 // write to Nvim's log.
 ```
 So the first few lines in the example code's main() function do just this:
-```
+```go
   // create a log to log to right away. It will help with debugging
   l, _ := os.Create("nvim-go-client-example.log")
   log.SetOutput(l)
@@ -139,7 +139,7 @@ A slight tangent to editorialize:
 Regardless of what I said above these examples show you how to create commands and autocommands using Go.
 
 The code main calls plugin.Main().
-```
+```go
   plugin.Main(func(p *plugin.Plugin) error {
     ...
   }
@@ -156,7 +156,7 @@ are exported. So you either have to write new ones or copy and paste the ones in
 
 #### Commands
 The first thing the p function does is use p.HandleComamnd() to create a new command:
-```
+```go
   p.HandleCommand(&plugin.CommandOptions{Name: "ExCmd", NArgs: "?", Bang: true, Eval: "[getcwd(),bufname()]"},
       func(args []string, bang bool, eval *cmdEvalExample) {
           log.Print("called command ExCmd")
@@ -205,7 +205,7 @@ You can see that it logged your use of :ExCmd, logged the argument you gave it (
 and also current directory and a buffer name (in this case the buffer name was empty because the buffer had no name).
 
 If we look closer at the second argument to p.HandleCommand():
-```
+```go
   func(args []string, bang bool, eval *cmdEvalExample) {
       log.Print("called command ExCmd")
       exCmd(p, args, bang, eval)
@@ -224,7 +224,7 @@ The second argument is 'bang' and it is typed as a bool. It simply lets us know 
 :ExCmd is called. Above, when you typed :ExCmd!, you used a bang. So in that case bang would have been true.
 
 The third argument is 'eval' and it is a pointer to a struct. That struct is defined in commands.go and looks like:
-```
+```go
   type cmdEvalExample struct {
       Cwd     string `msgpack:",array"`
       Bufname string
@@ -239,7 +239,7 @@ How does go-plugin map the defined fields in plugin.CommandOptions to the argume
 assume that the function will take the argument in the order they are defined in the plugin.CommandOptions struct. 
 The order of the definition in the struct is Name, NArgs, Range, Count, Addr, Bang, Register, Eval, Bar, Complete. So
 if you define Name, NArgs, Range, Bang, Eval, and Bar the function signature will look like:
-```
+```go
 func(args []string, range string, bang bool, eval *struct, bar bool)
 ```
 I haven't tried every possible combination but this seems to be the case. This is one part of the go-plugin code I 
@@ -247,7 +247,7 @@ haven't examined thoroughly yet.
 
 #### Autocommands
 The example code creates two new autocommands. It does this using p.HandleAutocmd like so:
-```
+```go
   p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
       func() {
           log.Print("Just entered a buffer")
@@ -271,7 +271,7 @@ don't show in the example code: the Event field can list more than one event. Th
 defined in vimscript, but may not be obvious from the examples I have provided.
 
 The first autocommand created is very simple:
-```
+```go
   p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
       func() {
           log.Print("Just entered a buffer")
@@ -290,7 +290,7 @@ the same as the pattern you would pass to :autocommand in Neovim. i.e. it can be
 to work for Go files.
 
 The second autocommand definition is:
-```
+```go
   p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufAdd", Group: "ExmplNvGoClientGrp", Pattern: "*", Eval: "*"},
       func(eval *autocmdEvalExample) {
           log.Printf("buffer has cwd: %s", eval.Cwd)
@@ -299,7 +299,7 @@ The second autocommand definition is:
 This definition includes an Eval section and also has an argument that is passed to the anonymous function. The Eval,
 and how it works, is very similar to what was described above for the definition of the command. However, in this case,
 the Eval is simply an asterisk. What does this mean? Let's look at the definition for the autocmdEvalExample struct:
-```
+```go
 type autocmdEvalExample struct {
 	Cwd string `eval:"getcwd()"`
 }
@@ -308,7 +308,7 @@ The field tag is now different. It now describes, directly, that the value of th
 in the field. So, above, the value of the "getcwd()" vimscript expression should be stored in the Cwd field. You can
 have multiple fields and each one can have different expressions. This is what the asterisk means in the Eval field
 above. Here is an example of a struct with multiple fields, each field with its own expression:
-```
+```go
 type multiExprExample struct {
     Cwd string `eval:"getcwd()"`
     Name string `eval:"bufname()"`
@@ -325,7 +325,7 @@ Just entered a buffer
 
 #### Functions
 The example code creates five new functions. It does this using p.HandleFunction like so:
-```
+```go
   p.HandleFunction(&plugin.FunctionOptions{Name: "Upper"},
       func(args []string) (string, error) {
           log.Print("calling Upper")
@@ -351,9 +351,7 @@ The example code creates five new functions. It does this using p.HandleFunction
           log.Print("calling ShowFirst")
           return showfirst(p), nil
       })
-
 ```
-
 At this point, if you have read the previous sections, it should be obvious what is going on. As it turns out, defining
 functions is the simplest of the bunch. There are only two fields: Name and Eval (see the definition of
 plugin.FunctionOptions in go-plugin/nvim/plugin/plugin.go). In this section I won't talk so much about Eval or the
@@ -367,7 +365,6 @@ of these functions call is in functions.go in the example code.
 
 The "Upper" function simply takes a single string as argument, converts it to upper case and returns it. Feel free to
 try it from within Neovim:
-
 ```
 :echo Upper("this is now upper case")
 ```
@@ -392,7 +389,7 @@ It should print out a fairly large Vim list. Each element in the list should be 
 Neovim (somewhat) recently.
 
 If we look at the code for GetVV:
-```
+```go
 func getvv(p *plugin.Plugin, name string) ([]string, error) {
 	var result []string
 	p.Nvim.VVar(name, &result)
@@ -414,7 +411,7 @@ You may want to type something in the empty buffer first. Or bring up a file wit
 you'll just get a blank line when running ShowFirst().
 
 The code used for ShowFirst is:
-```
+```go
 func showfirst(p *plugin.Plugin) string {
 	br := nvim.NewBufferReader(p.Nvim, 0)
 	r := bufio.NewReader(br)
