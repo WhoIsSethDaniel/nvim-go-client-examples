@@ -33,7 +33,7 @@ At this point if you start Neovim you will get some errors upon start. You will 
 the project before you can start Neovim without receiving errors.
 
 Now you need to build the 'host'. In Neovim terms the 'host' is the program that will be talking to Neovim via
-the msgpack RPC mechanism (see :help msgpack-rpc for more info). You don't actually need to know anything about the
+the msgpack RPC mechanism (see :help [msgpack-rpc](https://neovim.io/doc/user/api.html#msgpack-rpc) for more info). You don't actually need to know anything about the
 msgpack protocol. If you want to learn more you can start [here](https://msgpack.org/index.html).
 
 First you need to download the one dependency (go-client):
@@ -101,15 +101,16 @@ function! s:Start_example_nvim_go_client(host) abort
         \ })
 endfunction
 ```
-The function you register as the initiator of the host takes a single argument: the name of the host. In the example
-in this code that argument is ignored. The key part of that function is the use of 'jobstart'. You can see :help
-jobstart() for more information. The first argument to 'jobstart' is the name of the program we built earlier with
-'make'. e.g. nvim-go-client-example. The 'rpc' argument is probably the most important since this tells Neovim that you 
-want this program to use the msgpack RPC mechanism to communicate with Neovim. The 'on_error' argument is important
-because it allows easier debugging of what is happening when things go wrong. Some errors get reported to stderr and all
-this code does is make sure that that error gets printed to messages. See :help :messages for more information about
-messages. Without the on_error section, and the function it calls, you will not see many of the errors that occur when
-the msgpack encoding/decoding fails. Later on we can induce some errors and see what gets printed out.
+The function you register as the initiator of the host takes a single argument: the name of the host. In the example in
+this code that argument is ignored. The key part of that function is the use of 'jobstart'. You can see :help
+[jobstart()](https://neovim.io/doc/user/eval.html#jobstart()) for more information. The first argument to 'jobstart' is
+the name of the program we built earlier with 'make'. e.g. nvim-go-client-example. The 'rpc' argument is probably the
+most important since this tells Neovim that you want this program to use the msgpack RPC mechanism to communicate with
+Neovim. The 'on_error' argument is important because it allows easier debugging of what is happening when things go
+wrong. Some errors get reported to stderr and all this code does is make sure that that error gets printed to messages.
+See :help [:messages](https://neovim.io/doc/user/message.html#:messages) for more information about messages. Without
+the on_error section, and the function it calls, you will not see many of the errors that occur when the msgpack
+encoding/decoding fails. Later on we can induce some errors and see what gets printed out.
 
 ### main.go
 The go-plugin code uses the default Go logger. So the first few lines in the example code's main() function do just
@@ -173,11 +174,11 @@ is a function that implements the functionality for the new command.
 > This is enforced by go-client. If you ever see an error in :messages that looks like "msgpack/rpc: handler return 
 > must be (), (error) or (valueType, error)" it means the return signature you have for your function is wrong.
 
-The plugin.CommandOptions record has many fields, all of which correspond directly to the arguments you can pass
-to :command within Neovim (see :help :command for more info). You can look at the fields in the record by looking
-in go-plugin/nvim/plugin/plugin.go. A quick listing of the fields in the struct are: Name, NArgs, Range, Count, Addr,
-Bang, Register, Eval, Bar, Complete. This example doesn't cover every option, but should help you figure out how
-to use those options should you need them.
+The plugin.CommandOptions record has many fields, all of which correspond directly to the arguments you can pass to
+:command within Neovim (see :help [:command](https://neovim.io/doc/user/map.html#:command) for more info). You can look
+at the fields in the record by looking in go-plugin/nvim/plugin/plugin.go. A quick listing of the fields in the struct
+are: Name, NArgs, Range, Count, Addr, Bang, Register, Eval, Bar, Complete. This example doesn't cover every option, but
+should help you figure out how to use those options should you need them.
 
 For this example the plugin.CommandOptions struct assigns a name of 'ExCmd' to the command, specifies that the number
 of arguments is 0 or 1 (that's what the "?" means), says that a bang ("!") is allowed, and has an eval section.
@@ -259,7 +260,7 @@ of filling in a plugin.CommandOptions struct it fills in a plugin.AutocmdOptions
 go-plugin/nvim/plugin/plugin.go). There are fewer fields for defining autocommands, but, like commands, they matchup
 exactly with what you would use if you were defining the autocommand in vimscript. The fields available are:
 Event, Group, Pattern, Nested, Eval. For more details on how autocommands are defined in vimscript see :help
-autocommand.
+[autocommand](https://neovim.io/doc/user/autocmd.html#autocommand).
 
 My experimentation showed that if you define more than one autocommand in the same Event the manifest will be screwed
 up. So two (or more) autocommands in event "BufEnter" seemed to cause a problem. However if one autocommand was in 
@@ -378,8 +379,8 @@ pretty large, but you can look at it using go doc:
 go doc -all nvim
 ```
 GetVV uses the VVar() method to retrieve whatever v: variable you wish to retrieve (for more information on v: variables
-have a look at :help vim-variable). Perhaps the simplest one is v:oldfiles. So let's use GetVV to retrieve v:oldfiles.
-Fire up Neovim and run:
+have a look at :help [vim-variable](https://neovim.io/doc/user/eval.html#vim-variable)). Perhaps the simplest one is
+v:oldfiles. So let's use GetVV to retrieve v:oldfiles. Fire up Neovim and run:
 ```
 :echo GetVV("oldfiles")
 ```
