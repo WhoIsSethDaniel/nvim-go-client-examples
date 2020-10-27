@@ -82,14 +82,14 @@ Go client does not hook into this mechanism so you have to generate the manifest
 Vim code.
 
 The code just above that registers a Vim function that starts the host job. 
-```
+```vim
 call remote#host#Register('nvim_go_client_example', 'x', function('s:Start_example_nvim_go_client'))
 ```
 It does this by calling remote#host#Register(). The first argument to this function is the name of the host as given to
 the -manifest argument above. e.g. nvim_go_client_example. The second argument, as best I can tell, can safely be
 ignored. The third argument gives a function reference to a Vim function that starts the job. In this case that function
 is s:Start_example_nvim_go_client().
-```
+```vim
 function! s:panic(ch, data, ...) abort
     echom a:data
 endfunction
