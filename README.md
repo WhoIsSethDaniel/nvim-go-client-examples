@@ -161,6 +161,15 @@ The first thing the p function does is use p.HandleComamnd() to create a new com
 p.HandleCommand() takes two arguments. The first is a pointer to a plugin.CommandOptions struct and the second
 is a function that implements the functionality for the new command.
 
+**A Note About the Function Return Value**
+> The second argument to p.HandleCommand (or p.HandleAutocmd or p.HandleFunction, as we'll see later) requires a very
+> specific return value. The return value **must** be one of the following:
+> 1. no return value:  func m() {}
+> 2. returns an error:  func m() (error) {}
+> 3. returns a type and an error:  func m() ([]string, error) {}
+> This is enforced by go-client. If you ever see an error in :messages that looks like "msgpack/rpc: handler return 
+> must be (), (error) or (valueType, error)" it means the return signature you have for your function is wrong.
+
 The plugin.CommandOptions record has many fields, all of which correspond directly to the arguments you can pass
 to :command within Neovim (see :help :command for more info). You can look at the fields in the record by looking
 in go-plugin/nvim/plugin/plugin.go. A quick listing of the fields in the struct are: Name, NArgs, Range, Count, Addr,
@@ -309,7 +318,7 @@ Just entered a buffer
 ```
 
 #### Functions
-The example code creates two five new functions. It does this using p.HandleFunction like so:
+The example code creates five new functions. It does this using p.HandleFunction like so:
 ```
   p.HandleFunction(&plugin.FunctionOptions{Name: "Upper"},
       func(args []string) (string, error) {
@@ -338,19 +347,21 @@ The example code creates two five new functions. It does this using p.HandleFunc
       })
 
 ```
-At this point, if you have read the previous sections, it should be obvious what is going on. As it turns out,
-defining functions is the simplest of the bunch. There are only two fields: Name and Eval (see the definition of
-plugin.FunctionOptions in go-plugin/nvim/plugin/plugin.go). In this section I won't talk so much about Eval or
-the definition of the functions. Instead there are a few things the functions do that may be interesting.
 
-I continue to to use an anonymous function to wrap the code I want to code. In this section we will finally see
-a particularly good use for this: the ability of our code to use the plugin object.
+At this point, if you have read the previous sections, it should be obvious what is going on. As it turns out, defining
+functions is the simplest of the bunch. There are only two fields: Name and Eval (see the definition of
+plugin.FunctionOptions in go-plugin/nvim/plugin/plugin.go). In this section I won't talk so much about Eval or the
+definition of the functions. Instead there are a few things the functions do that may be interesting.
 
-The code above defines five new functions: Upper, UpperCwd, ShowThings, GetVV, and ShowFirst. The Go functions that
-each of these functions call is in functions.go in the example code.
+I continue to to use an anonymous function to wrap the code I want to use for the function. In this section we will
+finally see a particularly good use for this: the ability of our code to use the plugin object.
 
-The "Upper" function simply takes a single string as argument, converts it to upper case and returns it. Feel free to 
+The code above defines five new functions: Upper, UpperCwd, ShowThings, GetVV, and ShowFirst. The Go functions that each
+of these functions call is in functions.go in the example code.
+
+The "Upper" function simply takes a single string as argument, converts it to upper case and returns it. Feel free to
 try it from within Neovim:
+
 ```
 :echo Upper("this is now upper case")
 ```
@@ -360,19 +371,19 @@ calling Upper
 ```
 Feel free to also run UpperCwd and ShowThings. Look at the code, see what each one does, and then run it.
 
-The 'GetVV' function does something a little interesting. It uses the nvim API provided by go-plugin. The nvim
-API is pretty large, but you can look at it using go doc:
+The 'GetVV' function does something a little interesting. It uses the nvim API provided by go-plugin. The nvim API is
+pretty large, but you can look at it using go doc:
 ```
 go doc -all nvim
 ```
-GetVV uses the VVar() method to retrieve whatever v: variable you wish to retrieve (for more information on v:
-variables have a look at :help vim-variable). Perhaps the simplest one is v:oldfiles. So let's use GetVV to retrieve
-v:oldfiles. Fire up Neovim and run:
+GetVV uses the VVar() method to retrieve whatever v: variable you wish to retrieve (for more information on v: variables
+have a look at :help vim-variable). Perhaps the simplest one is v:oldfiles. So let's use GetVV to retrieve v:oldfiles.
+Fire up Neovim and run:
 ```
 :echo GetVV("oldfiles")
 ```
-It should print out a fairly large Vim list. Each element in the list should be a path to a file that you have edited
-in Neovim (somewhat) recently.
+It should print out a fairly large Vim list. Each element in the list should be a path to a file that you have edited in
+Neovim (somewhat) recently.
 
 If we look at the code for GetVV:
 ```
@@ -382,14 +393,14 @@ func getvv(p *plugin.Plugin, name string) ([]string, error) {
 	return result, nil
 }
 ```
-You can see that we use the plugin object. The plugin object has an Nvim object stashed in it and we use that
-to call the VVar() method. The API for some of these methods is odd and may not be what you are expecting. It is
-definitely not what I would have expected. The last argument to VVar() (per the VVar signature) is a pointer to 
-interface{}. The go-plugin restricts this to a pointer to either a slice or a map.
+You can see that we use the plugin object. The plugin object has an Nvim object stashed in it and we use that to call
+the VVar() method. The API for some of these methods is odd and may not be what you are expecting. It is definitely not
+what I would have expected. The last argument to VVar() (per the VVar signature) is a pointer to interface{}. The
+go-plugin restricts this to a pointer to either a slice or a map.
 
-The last function defined is ShowFirst. This retrieves the first line of the current buffer and prints it out.
-This demonstrates that your Go programs have access to the open buffers. So, first, try it out by bringing up Neovim 
-and running:
+The last function defined is ShowFirst. This retrieves the first line of the current buffer and prints it out. This
+demonstrates that your Go programs have access to the open buffers. So, first, try it out by bringing up Neovim and
+running:
 ```
 :echo ShowFirst()
 ```
@@ -405,6 +416,6 @@ func showfirst(p *plugin.Plugin) string {
 	return line
 }
 ```
-We once again use the plugin object. In this case we use it to create a new buffer reader object. See the go doc for
-the nvim api for more information about the arguments to NewBufferReader(). Once we have the new buffer reader object
-it is converted to a bufio.Reader and we can grab the first line of the buffer and return it. Pretty simple!
+We once again use the plugin object. In this case we use it to create a new buffer reader object. See the go doc for the
+nvim api for more information about the arguments to NewBufferReader(). Once we have the new buffer reader object it is
+converted to a bufio.Reader and we can grab the first line of the buffer and return it. Pretty simple!
