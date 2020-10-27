@@ -167,6 +167,7 @@ is a function that implements the functionality for the new command.
 > 1. no return value:  func m() {}
 > 2. returns an error:  func m() (error) {}
 > 3. returns a type and an error:  func m() ([]string, error) {}
+>
 > This is enforced by go-client. If you ever see an error in :messages that looks like "msgpack/rpc: handler return 
 > must be (), (error) or (valueType, error)" it means the return signature you have for your function is wrong.
 
