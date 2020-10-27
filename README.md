@@ -4,8 +4,8 @@ Examples of using the nvim [go client](https://github.com/neovim/go-client) and 
 This file, the code, and the comments in the code are intended to help those who are interested in using Go to write
 plugins for Neovim. Please do not take this document as absolute fact. I have done my best to document what I have
 discovered by experimentation and reading the code, but it is very likely at least a few things I write here aren't 100%
-accurate. I accept patches to the documentation and to the example code. My hope is to make this document as accurate
-and as useful as possible.
+accurate (**very** likely). I accept patches to the documentation and to the example code. My hope is to make this
+document as accurate and as useful as possible.
 
 ## Disclaimer(s)
 * This is not intended to be a complete guide to all things [go-client](https://github.com/neovim/go-client). The api
@@ -36,6 +36,11 @@ Now you need to build the 'host'. In Neovim terms the 'host' is the program that
 the msgpack RPC mechanism (see :help msgpack-rpc for more info). You don't actually need to know anything about the
 msgpack protocol. If you want to learn more you can start [here](https://msgpack.org/index.html).
 
+First you need to download the one dependency (go-client):
+```
+cd nvim-go-client-examples
+go mod download
+```
 To build the project simply run make in the project directory
 ```
 cd nvim-go-client-examples
