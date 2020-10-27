@@ -112,12 +112,8 @@ messages. Without the on_error section, and the function it calls, you will not 
 the msgpack encoding/decoding fails. Later on we can induce some errors and see what gets printed out.
 
 ### main.go
-The go-plugin code uses the default Go logger. In go-plugin/nvim/plugin/main.go there is a comment:
-```go
-// Applications should use the default logger in the standard log package to
-// write to Nvim's log.
-```
-So the first few lines in the example code's main() function do just this:
+The go-plugin code uses the default Go logger. So the first few lines in the example code's main() function do just
+this:
 ```go
   // create a log to log to right away. It will help with debugging
   l, _ := os.Create("nvim-go-client-example.log")
