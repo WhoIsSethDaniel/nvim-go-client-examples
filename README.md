@@ -143,6 +143,15 @@ See :help [:messages](https://neovim.io/doc/user/message.html#:messages) for mor
 the on_error section, and the function it calls, you will not see many of the errors that occur when the msgpack
 encoding/decoding fails.
 
+### Read the godoc
+
+See especially 'go doc -all nvim/plugin'. It has some details that are important such as the signature required for the
+function arguments for the various Handler methods. Details about the fields in public structs, etc.... It's worthwhile
+to read it. Some of what it talks about are discussed in this document.
+
+Also see 'go doc -all nvim'. It's a much larger document. You do not need to be intimately familiar with it to get 
+started with go-plugin work, but it would be good to be vaguely familiar with the capabilities of the API.
+
 ### main.go
 The go-plugin code uses the default Go logger. So the first few lines in the example code's main() function do just
 this:
@@ -219,7 +228,7 @@ is a function that implements the functionality for the new command.
 
 The plugin.CommandOptions record has many fields, all of which correspond directly to the arguments you can pass to
 :command within Neovim (see :help [:command](https://neovim.io/doc/user/map.html#:command) for more info). You can look
-at the fields in the record by looking in go-plugin/nvim/plugin/plugin.go. A quick listing of the fields in the struct
+at the fields in the record by looking at the godoc (go doc -all nvim/plugin). A quick listing of the fields in the struct
 are: Name, NArgs, Range, Count, Addr, Bang, Register, Eval, Bar, Complete. This example doesn't cover every option, but
 should help you figure out how to use those options should you need them.
 
@@ -503,3 +512,42 @@ func showfirst(p *plugin.Plugin) string {
 We once again use the plugin object. In this case we use it to create a new buffer reader object. See the go doc for the
 nvim api for more information about the arguments to NewBufferReader(). Once we have the new buffer reader object it is
 converted to a bufio.Reader and we can grab the first line of the buffer and return it. Pretty simple!
+
+You can subscribe to special events that Neovim emits and you can attach a function that is called when those events are
+emitted. It's similar to autocommands, but the events are different and are called with arguments. See :help 
+[api-buffer-updates](https://neovim.io/doc/user/api.html#api-buffer-updates) for more information. (There are also the
+ui-events which is not covered here but which works in a similar manner. See :help [ui-events](https://neovim.io/doc/user/ui.html#ui-events) for more information.)
+
+The below code attaches to two of the events and logs when they occur along with the arguments that are passed to it.
+
+```
+  p.Handle("nvim_buf_lines_event",
+          func(e ...interface{}) {
+                  log.Printf("triggered buf lines event %#v", e)
+          })
+  p.Handle("nvim_buf_changedtick_event",
+          func(e ...interface{}) {
+                  log.Printf("triggered changed tick event %#v", e)
+          })
+```
+
+To see this in action simply start up Neovim and start typing. Maybe type a few lines. Then quit.
+
+The output may look something like this (I typed "hi there" in an empty buffer, then quit):
+
+```
+Just entered a buffer
+triggered changed tick event []interface {}{1, 2}
+triggered buf lines event []interface {}{1, 3, 0, 1, []interface {}{"h"}, false}
+triggered buf lines event []interface {}{1, 4, 0, 1, []interface {}{"hi"}, false}
+triggered buf lines event []interface {}{1, 5, 0, 1, []interface {}{"hi "}, false}
+triggered buf lines event []interface {}{1, 6, 0, 1, []interface {}{"hi t"}, false}
+triggered buf lines event []interface {}{1, 7, 0, 1, []interface {}{"hi th"}, false}
+triggered buf lines event []interface {}{1, 8, 0, 1, []interface {}{"hi the"}, false}
+triggered buf lines event []interface {}{1, 9, 0, 1, []interface {}{"hi ther"}, false}
+triggered buf lines event []interface {}{1, 10, 0, 1, []interface {}{"hi there"}, false}
+triggered buf lines event []interface {}{1, 11, 0, 1, []interface {}{"hi there", ""}, false}
+```
+
+That's a lot of output, but it is sending an event every time a key is pressed. Notice the tick event near the
+top.

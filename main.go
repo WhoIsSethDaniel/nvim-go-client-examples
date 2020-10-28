@@ -21,9 +21,15 @@ func main() {
 			})
 
 		// AutoCommands
+		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "VimEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
+			func() {
+				log.Print("Just entered vim")
+			})
 		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
 			func() {
 				log.Print("Just entered a buffer")
+				// this call is paired with the example below for p.Handle()
+				p.Nvim.AttachBuffer(1, false, map[string]interface{}{})
 			})
 		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufAdd", Group: "ExmplNvGoClientGrp", Pattern: "*", Eval: "*"},
 			func(eval *autocmdEvalExample) {
@@ -57,6 +63,20 @@ func main() {
 				return showfirst(p), nil
 			})
 
+		// Special events (see :h api-buffer-updates for more);
+		// these special p.Handle events are paired with the call to Subscribe above
+		p.Handle("nvim_buf_lines_event",
+			func(e ...interface{}) {
+				log.Printf("triggered buf lines event %#v", e)
+			})
+		p.Handle("nvim_buf_changedtick_event",
+			func(e ...interface{}) {
+				log.Printf("triggered changed tick event %#v", e)
+			})
+
 		return nil
 	})
+
+	// Generic handler (see :h events) p.Handle() takes an event name followed by a function that responds when that
+	// event is triggered
 }
