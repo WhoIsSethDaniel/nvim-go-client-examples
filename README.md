@@ -312,6 +312,7 @@ The example code creates two new autocommands. It does this using p.HandleAutocm
   p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
       func() {
           log.Print("Just entered a buffer")
+          [...]
       })
   p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufAdd", Group: "ExmplNvGoClientGrp", Pattern: "*", Eval: "*"},
       func(eval *autocmdEvalExample) {
@@ -338,6 +339,7 @@ The first autocommand created is very simple:
   p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
       func() {
           log.Print("Just entered a buffer")
+          [...]
       })
 ```
 
@@ -454,6 +456,8 @@ calling Upper
 Feel free to also run UpperCwd and ShowThings. Look at the code, see what each one does, and then run it.
 
 #### NVim API
+
+##### Retrieving Vim Variables
 The 'GetVV' function does something a little interesting. It uses the nvim API provided by go-plugin. The nvim API is
 pretty large, but you can look at it using go doc:
 
@@ -487,9 +491,10 @@ the VVar() method. The API for some of these methods is odd and may not be what 
 what I would have expected. The last argument to VVar() (per the VVar signature) is a pointer to interface{}. The
 go-plugin restricts this to a pointer to either a slice or a map.
 
-The last function defined is ShowFirst. This retrieves the first line of the current buffer and prints it out. This
-demonstrates that your Go programs have access to the open buffers. So, first, try it out by bringing up Neovim and
-running:
+##### Reading the Current Buffer
+
+The ShowFirst function retrieves the first line of the current buffer and prints it out. This demonstrates that your Go
+programs have access to the open buffers. So, first, try it out by bringing up Neovim and running:
 
 ```
 :echo ShowFirst()
@@ -513,6 +518,8 @@ We once again use the plugin object. In this case we use it to create a new buff
 nvim api for more information about the arguments to NewBufferReader(). Once we have the new buffer reader object it is
 converted to a bufio.Reader and we can grab the first line of the buffer and return it. Pretty simple!
 
+##### Subscribing to Special Events
+
 You can subscribe to special events that Neovim emits and you can attach a function that is called when those events are
 emitted. It's similar to autocommands, but the events are different and are called with arguments. See :help 
 [api-buffer-updates](https://neovim.io/doc/user/api.html#api-buffer-updates) for more information. (There are also the
@@ -520,7 +527,7 @@ ui-events which is not covered here but which works in a similar manner. See :he
 
 The below code attaches to two of the events and logs when they occur along with the arguments that are passed to it.
 
-```
+```go
   p.Handle("nvim_buf_lines_event",
           func(e ...interface{}) {
                   log.Printf("triggered buf lines event %#v", e)
@@ -530,6 +537,21 @@ The below code attaches to two of the events and logs when they occur along with
                   log.Printf("triggered changed tick event %#v", e)
           })
 ```
+
+You can't simply call p.Handle and have the events start appearing. You have to use nvim.Subscribe() to get events
+from a particular buffer. The code for this is up near the top of Main() where the BufEnter autocommand was defined:
+
+```go
+  p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
+          func() {
+                  log.Print("Just entered a buffer")
+                  // this call is paired with the example below for p.Handle()
+                  p.Nvim.AttachBuffer(1, false, map[string]interface{}{})
+          })
+```
+
+Notice the call to p.Nvim.AttachBuffer(). This is what starts the events flowing back to us. Without both calling
+Handle() and AttachBuffer() the callbacks will never be called.
 
 To see this in action simply start up Neovim and start typing. Maybe type a few lines. Then quit.
 
