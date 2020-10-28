@@ -538,7 +538,7 @@ The below code attaches to two of the events and logs when they occur along with
           })
 ```
 
-You can't simply call p.Handle and have the events start appearing. You have to use nvim.Subscribe() to get events
+You can't simply call p.Handle and have the events start appearing. You have to use nvim.AttachBuffer() to get events
 from a particular buffer. The code for this is up near the top of Main() where the BufEnter autocommand was defined:
 
 ```go
