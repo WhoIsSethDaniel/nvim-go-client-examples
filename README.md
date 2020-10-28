@@ -191,9 +191,10 @@ waiting to send and receive to and from Neovim. The Serve() method blocks foreve
 
 As you get more comfortable with using go-plugin you may not want to continue to use Main(). Main() seems more like a
 convenience function that does the bare minimum a good host should do. The only problem with not using the Main() method
-is that it uses several useful helper functions to write out the manifest. Unfortunately neither of these helper methods
+is that it uses several useful helper functions to help write out the manifest. Unfortunately neither of these helper methods
 are exported. So you either have to write new ones or copy and paste the ones in the source to your code. See
-go-plugin/nvim/plugin/main.go to view the code for Main().
+go-plugin/nvim/plugin/main.go to view the code for Main(). Also see go-plugin/nvim/plugin/plugin.go (or 'go doc -all
+nvim/plugin') to view the Manifest() method. This method returns the manifest as a byte slice. 
 
 #### Commands
 The first thing the anonymous function does is use p.HandleCommand() to create a new command:
