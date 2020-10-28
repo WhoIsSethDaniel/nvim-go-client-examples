@@ -25,10 +25,12 @@ You can clone the repository into the same place you place all your plugins. Let
 ~/.config/nvim/pack/git-plugins/start. You will need to substitute wherever it is you install Vim plugins.
 
 Clone the repository to where you install plugins:
+
 ```
 cd ~/.config/nvim/pack/git-plugins/start
 git clone https://github.com/WhoIsSethDaniel/nvim-go-client-examples
 ```
+
 At this point if you start Neovim you will get some errors upon start. You will need to finish building and installing
 the project before you can start Neovim without receiving errors.
 
@@ -36,24 +38,29 @@ Now you need to build the 'host'. In Neovim terms the 'host' is the program that
 the msgpack RPC mechanism (see :help [msgpack-rpc](https://neovim.io/doc/user/api.html#msgpack-rpc) for more info). You don't actually need to know anything about the
 msgpack protocol. If you want to learn more you can start [here](https://msgpack.org/index.html).
 
-First you need to download the one dependency (go-client):
+First you need to download the one dependency (go-client). From within the nvim-go-client-examples directory run:
+
 ```
-cd nvim-go-client-examples
 go mod download
 ```
-To build the project simply run make in the project directory
+
+To build the project simply run make in the project directory.
+
 ```
-cd nvim-go-client-examples
 make
 ```
+
 This should build the 'nvim-go-client-example' program. This is the 'host' that will be talking to Neovim. By default
 the host talks to Neovim over stdout/stdin. 
 
 To verify the 'host' works as expected you should run:
+
 ```
 ./nvim-go-client-example -h
 ```
+
 The output should be something like this:
+
 ```
 Usage of ./nvim-go-client-example:
   -location .vim file
@@ -61,6 +68,7 @@ Usage of ./nvim-go-client-example:
   -manifest host
         Write plugin manifest for host to stdout
 ```
+
 You should copy the 'nvim-go-client-example' to somewhere in your path. Any time you rebuild the host you will need to
 copy the new build to the same location. 
 
@@ -74,21 +82,43 @@ details what the host can do.
 
 The code at the very bottom of the file that starts with 'call remote#host#RegisterPlugin' is copied and pasted from
 running:
+
 ```
 ./nvim-go-client-example -manifest nvim_go_client_example
 ```
+
+The output looks something like this (but may be different if I've added or removed code since I last copied this text):
+
+```vim
+call remote#host#RegisterPlugin('nvim_go_client_example', '0', [
+\ {'type': 'autocmd', 'name': 'BufAdd', 'sync': 0, 'opts': {'eval': '{''Cwd'': getcwd()}', 'group': 'ExmplNvGoClientGrp', 'pattern': '*'}},
+\ {'type': 'autocmd', 'name': 'BufEnter', 'sync': 0, 'opts': {'group': 'ExmplNvGoClientGrp', 'pattern': '*'}},
+\ {'type': 'command', 'name': 'ExCmd', 'sync': 0, 'opts': {'bang': '', 'eval': '[getcwd(),bufname()]', 'nargs': '?'}},
+\ {'type': 'function', 'name': 'GetVV', 'sync': 1, 'opts': {}},
+\ {'type': 'function', 'name': 'ShowFirst', 'sync': 1, 'opts': {}},
+\ {'type': 'function', 'name': 'ShowThings', 'sync': 1, 'opts': {'eval': '[getcwd(),argc()]'}},
+\ {'type': 'function', 'name': 'Upper', 'sync': 1, 'opts': {}},
+\ {'type': 'function', 'name': 'UpperCwd', 'sync': 1, 'opts': {'eval': 'getcwd()'}},
+\ ])
+```
+
+This generated code will be called the 'manifest' within this document. 
+
 In other languages, such as Python, this step is somewhat automatic: you just run :UpdateRemotePlugins. For now the
 Go client does not hook into this mechanism so you have to generate the manifest manually and paste it into your
 Vim code.
 
-The code just above that registers a Vim function that starts the host job. 
+The code just above the manifest registers a Vim function that starts the host job. 
+
 ```vim
 call remote#host#Register('nvim_go_client_example', 'x', function('s:Start_example_nvim_go_client'))
 ```
+
 It does this by calling remote#host#Register(). The first argument to this function is the name of the host as given to
 the -manifest argument above. e.g. nvim_go_client_example. The second argument, as best I can tell, can safely be
 ignored. The third argument gives a function reference to a Vim function that starts the job. In this case that function
 is s:Start_example_nvim_go_client().
+
 ```vim
 function! s:panic(ch, data, ...) abort
     echom a:data
@@ -101,6 +131,7 @@ function! s:Start_example_nvim_go_client(host) abort
         \ })
 endfunction
 ```
+
 The function you register as the initiator of the host takes a single argument: the name of the host. In the example in
 this code that argument is ignored. The key part of that function is the use of 'jobstart'. You can see :help
 [jobstart()](https://neovim.io/doc/user/eval.html#jobstart()) for more information. The first argument to 'jobstart' is
@@ -110,24 +141,25 @@ Neovim. The 'on_error' argument is important because it allows easier debugging 
 wrong. Some errors get reported to stderr and all this code does is make sure that that error gets printed to messages.
 See :help [:messages](https://neovim.io/doc/user/message.html#:messages) for more information about messages. Without
 the on_error section, and the function it calls, you will not see many of the errors that occur when the msgpack
-encoding/decoding fails. Later on we can induce some errors and see what gets printed out.
+encoding/decoding fails.
 
 ### main.go
 The go-plugin code uses the default Go logger. So the first few lines in the example code's main() function do just
 this:
+
 ```go
   // create a log to log to right away. It will help with debugging
   l, _ := os.Create("nvim-go-client-example.log")
   log.SetOutput(l)
 ```
+
 This is pretty straightforward. Create a file to log to and set the output to log to that file. The
 go-plugin code doesn't perform a lot of logging so I have found this mostly useful for debugging my
 own code when using go-plugin. 
 
 The rest of the code in main creates new functions, commands, and autocommands via Go. 
 
-A slight tangent to editorialize:
-
+**A slight tangent to editorialize**
 > I'm not certain that there is great advantage in creating your own commands and autocommands via Go. It's more
 > cumbersome than creating them via Vimscript. The real advantage of using go-plugin is to create Vim functions that are
 > written in Go. You can then call them from your Vimscript created autocommands and commands. Your Go functions can
@@ -136,15 +168,17 @@ A slight tangent to editorialize:
 Regardless of what I said above these examples show you how to create commands and autocommands using Go.
 
 The code in main calls plugin.Main().
+
 ```go
   plugin.Main(func(p *plugin.Plugin) error {
     ...
   }
 ```
+
 This method does a number of things. It creates the basic flags (-manifest and -location) using the flag package and
-runs the passed in p function. The p function is expected to have code that creates handlers for commands, autocommands,
-and functions. After the p function is run Main runs nvim.Serve(). This starts your plugin waiting to send and receive
-to and from Neovim. The Serve() method blocks forever.
+runs the passed in anonymous function. The anonymous function is expected to have code that creates handlers for
+commands, autocommands, and functions. After the anonymous function is run Main runs nvim.Serve(). This starts your plugin
+waiting to send and receive to and from Neovim. The Serve() method blocks forever.
 
 As you get more comfortable with using go-plugin you may not want to continue to use Main(). Main() seems more like a
 convenience function that does the bare minimum a good host should do. The only problem with not using the Main() method
@@ -153,7 +187,8 @@ are exported. So you either have to write new ones or copy and paste the ones in
 go-plugin/nvim/plugin/main.go to view the code for Main().
 
 #### Commands
-The first thing the p function does is use p.HandleComamnd() to create a new command:
+The first thing the anonymous function does is use p.HandleCommand() to create a new command:
+
 ```go
   p.HandleCommand(&plugin.CommandOptions{Name: "ExCmd", NArgs: "?", Bang: true, Eval: "[getcwd(),bufname()]"},
       func(args []string, bang bool, eval *cmdEvalExample) {
@@ -161,10 +196,11 @@ The first thing the p function does is use p.HandleComamnd() to create a new com
           exCmd(p, args, bang, eval)
       })
 ```
+
 p.HandleCommand() takes two arguments. The first is a pointer to a plugin.CommandOptions struct and the second
 is a function that implements the functionality for the new command.
 
-**A Note About the Function Return Value**
+**A Note About the p.HandleCommand Function Return Value**
 > The second argument to p.HandleCommand (or p.HandleAutocmd or p.HandleFunction, as we'll see later) requires a very
 > specific return value. The return value **must** be one of the following:
 > 1. no return value:  func m() {}
@@ -173,6 +209,13 @@ is a function that implements the functionality for the new command.
 >
 > This is enforced by go-client. If you ever see an error in :messages that looks like "msgpack/rpc: handler return 
 > must be (), (error) or (valueType, error)" it means the return signature you have for your function is wrong.
+
+**A Second Note About the p.HandleCommand Function Return Value**
+> If you looked closely at the manifest generated earlier you may have noticed a field named 'sync'. It is a boolean
+> field and some of the commands in the manifest have sync set to 0 and some have sync set to 1. This field tells Vim
+> whether to run the command synchronously or asynchronously. The go-client code determines how to set this field 
+> automatically by looking for a return value from the function you pass to p.HandleCommand (or p.HandleAutocmd or
+> p.HandleFunction). If there is **no** return value then sync will be set to 0. Otherwise it is set to 1.
 
 The plugin.CommandOptions record has many fields, all of which correspond directly to the arguments you can pass to
 :command within Neovim (see :help [:command](https://neovim.io/doc/user/map.html#:command) for more info). You can look
@@ -185,11 +228,14 @@ of arguments is 0 or 1 (that's what the "?" means), says that a bang ("!") is al
 
 The name is the name a user will use from Neovim to call the command. So, in this case, we have defined a command
 with the name of ExCmd. So, from Neovim, you can use :ExCmd. Give it a try. Fire up Neovim and run 
+
 ```
 :ExCmd! hi
 ```
+
 Nothing much will happen since the command only logs to the log file. So feel free to quit Neovim and look at the 
 log file that was created in the same directory. It will probably look something like this:
+
 ```
 Just entered a buffer
 called command ExCmd
@@ -199,16 +245,19 @@ called command ExCmd
     cwd: /home/seth
     buffer: 
 ```
+
 You can see that it logged your use of :ExCmd, logged the argument you gave it ("hi"), logged that you used a bang,
 and also current directory and a buffer name (in this case the buffer name was empty because the buffer had no name).
 
 If we look closer at the second argument to p.HandleCommand():
+
 ```go
   func(args []string, bang bool, eval *cmdEvalExample) {
       log.Print("called command ExCmd")
       exCmd(p, args, bang, eval)
   })
 ```
+
 we can see that the code is using an anonymous function to handle the arguments, log the use of 'ExCmd', and also 
 call another function. The anonymous function is useful because it creates a closure that can be used to pass 
 the plugin object to the exCmd function. But before we get to that let's talk about the arguments to the anonymous
@@ -222,12 +271,14 @@ The second argument is 'bang' and it is typed as a bool. It simply lets us know 
 :ExCmd is called. Above, when you typed :ExCmd!, you used a bang. So in that case bang would have been true.
 
 The third argument is 'eval' and it is a pointer to a struct. That struct is defined in commands.go and looks like:
+
 ```go
   type cmdEvalExample struct {
       Cwd     string `msgpack:",array"`
       Bufname string
   }
 ```
+
 The fields in the struct match up with the expression given in the 'Eval' field for plugin.CommandOptions. Notice that
 the 'Eval' field is vimscript surrounded by quotes. The vimscript is a list with two fields, each field being the result
 of an expression. The first expression is getcwd() and the second expression is bufname(). Note the field tag in the
@@ -237,14 +288,17 @@ How does go-plugin map the defined fields in plugin.CommandOptions to the argume
 assume that the function will take the argument in the order they are defined in the plugin.CommandOptions struct. 
 The order of the definition in the struct is Name, NArgs, Range, Count, Addr, Bang, Register, Eval, Bar, Complete. So
 if you define Name, NArgs, Range, Bang, Eval, and Bar the function signature will look like:
+
 ```go
 func(args []string, range string, bang bool, eval *struct, bar bool)
 ```
+
 I haven't tried every possible combination but this seems to be the case. This is one part of the go-plugin code I 
 haven't examined thoroughly yet.
 
 #### Autocommands
 The example code creates two new autocommands. It does this using p.HandleAutocmd like so:
+
 ```go
   p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
       func() {
@@ -255,6 +309,7 @@ The example code creates two new autocommands. It does this using p.HandleAutocm
           log.Printf("buffer has cwd: %s", eval.Cwd)
       })
 ```
+
 It's very similar to how commands are defined. Instead of calling p.HandleCommand it calls p.HandleAutocmd. Instead
 of filling in a plugin.CommandOptions struct it fills in a plugin.AutocmdOptions struct (you can see the fields in
 go-plugin/nvim/plugin/plugin.go). There are fewer fields for defining autocommands, but, like commands, they matchup
@@ -269,18 +324,22 @@ don't show in the example code: the Event field can list more than one event. Th
 defined in vimscript, but may not be obvious from the examples I have provided.
 
 The first autocommand created is very simple:
+
 ```go
   p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
       func() {
           log.Print("Just entered a buffer")
       })
 ```
+
 This will simply log that a buffer was entered into whenever that event is fired by Neovim. In fact, we have 
 already seen this autocommand in action. If you go back and look at the log file excerpt in the previous section
 you will see a line that says:
+
 ```
 Just entered a buffer
 ```
+
 That log entry was created by this autocommand.
 
 The Group field is the same as the group you would use in a vimscript autocommand definition. The Pattern field is 
@@ -288,24 +347,29 @@ the same as the pattern you would pass to :autocommand in Neovim. i.e. it can be
 to work for Go files.
 
 The second autocommand definition is:
+
 ```go
   p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufAdd", Group: "ExmplNvGoClientGrp", Pattern: "*", Eval: "*"},
       func(eval *autocmdEvalExample) {
           log.Printf("buffer has cwd: %s", eval.Cwd)
       })
 ```
+
 This definition includes an Eval section and also has an argument that is passed to the anonymous function. The Eval,
 and how it works, is very similar to what was described above for the definition of the command. However, in this case,
 the Eval is simply an asterisk. What does this mean? Let's look at the definition for the autocmdEvalExample struct:
+
 ```go
 type autocmdEvalExample struct {
 	Cwd string `eval:"getcwd()"`
 }
 ```
+
 The field tag is now different. It now describes, directly, that the value of the given expression should be stored 
 in the field. So, above, the value of the "getcwd()" vimscript expression should be stored in the Cwd field. You can
 have multiple fields and each one can have different expressions. This is what the asterisk means in the Eval field
 above. Here is an example of a struct with multiple fields, each field with its own expression:
+
 ```go
 type multiExprExample struct {
     Cwd string `eval:"getcwd()"`
@@ -313,8 +377,10 @@ type multiExprExample struct {
     Id int `eval:"bufnr()"`
 }
 ```
+
 You can see the result from the second autocommand if you fire up Neovim and create a new buffer. You can then look
 at the log file and see an entry that looks like:
+
 ```
 Just entered a buffer
 buffer has cwd: /home/seth
@@ -323,6 +389,7 @@ Just entered a buffer
 
 #### Functions
 The example code creates five new functions. It does this using p.HandleFunction like so:
+
 ```go
   p.HandleFunction(&plugin.FunctionOptions{Name: "Upper"},
       func(args []string) (string, error) {
@@ -350,6 +417,7 @@ The example code creates five new functions. It does this using p.HandleFunction
           return showfirst(p), nil
       })
 ```
+
 At this point, if you have read the previous sections, it should be obvious what is going on. As it turns out, defining
 functions is the simplest of the bunch. There are only two fields: Name and Eval (see the definition of
 plugin.FunctionOptions in go-plugin/nvim/plugin/plugin.go). In this section I won't talk so much about Eval or the
@@ -363,31 +431,40 @@ of these functions call is in functions.go in the example code.
 
 The "Upper" function simply takes a single string as argument, converts it to upper case and returns it. Feel free to
 try it from within Neovim:
+
 ```
 :echo Upper("this is now upper case")
 ```
+
 Also, look at the log and notice the log entry:
+
 ```
 calling Upper
 ```
+
 Feel free to also run UpperCwd and ShowThings. Look at the code, see what each one does, and then run it.
 
 #### NVim API
 The 'GetVV' function does something a little interesting. It uses the nvim API provided by go-plugin. The nvim API is
 pretty large, but you can look at it using go doc:
+
 ```
 go doc -all nvim
 ```
+
 GetVV uses the VVar() method to retrieve whatever v: variable you wish to retrieve (for more information on v: variables
 have a look at :help [vim-variable](https://neovim.io/doc/user/eval.html#vim-variable)). Perhaps the simplest one is
 v:oldfiles. So let's use GetVV to retrieve v:oldfiles. Fire up Neovim and run:
+
 ```
 :echo GetVV("oldfiles")
 ```
+
 It should print out a fairly large Vim list. Each element in the list should be a path to a file that you have edited in
 Neovim (somewhat) recently.
 
 If we look at the code for GetVV:
+
 ```go
 func getvv(p *plugin.Plugin, name string) ([]string, error) {
 	var result []string
@@ -395,6 +472,7 @@ func getvv(p *plugin.Plugin, name string) ([]string, error) {
 	return result, nil
 }
 ```
+
 You can see that we use the plugin object. The plugin object has an Nvim object stashed in it and we use that to call
 the VVar() method. The API for some of these methods is odd and may not be what you are expecting. It is definitely not
 what I would have expected. The last argument to VVar() (per the VVar signature) is a pointer to interface{}. The
@@ -403,13 +481,16 @@ go-plugin restricts this to a pointer to either a slice or a map.
 The last function defined is ShowFirst. This retrieves the first line of the current buffer and prints it out. This
 demonstrates that your Go programs have access to the open buffers. So, first, try it out by bringing up Neovim and
 running:
+
 ```
 :echo ShowFirst()
 ```
+
 You may want to type something in the empty buffer first. Or bring up a file with content on the first line. Otherwise
 you'll just get a blank line when running ShowFirst().
 
 The code used for ShowFirst is:
+
 ```go
 func showfirst(p *plugin.Plugin) string {
 	br := nvim.NewBufferReader(p.Nvim, 0)
@@ -418,6 +499,7 @@ func showfirst(p *plugin.Plugin) string {
 	return line
 }
 ```
+
 We once again use the plugin object. In this case we use it to create a new buffer reader object. See the go doc for the
 nvim api for more information about the arguments to NewBufferReader(). Once we have the new buffer reader object it is
 converted to a bufio.Reader and we can grab the first line of the buffer and return it. Pretty simple!

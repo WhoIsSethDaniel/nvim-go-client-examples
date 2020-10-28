@@ -29,7 +29,7 @@ endfunction
 " You may want to read :help remote_plugin for more information.
 call remote#host#Register('nvim_go_client_example', 'x', function('s:Start_example_nvim_go_client'))
 
-" this is created by running ''nvim-go-client -manifest'.
+" this is created by running ''nvim-go-client -manifest nvim_go_client_example'.
 " do not edit manually.
 " the name for the 'host' you choose when running -manifest must match the
 " name you use in the above call to remote#host#Register. e.g. in this case
