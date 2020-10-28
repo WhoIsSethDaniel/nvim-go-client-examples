@@ -29,7 +29,7 @@ func main() {
 			func() {
 				log.Print("Just entered a buffer")
 				// this call is paired with the example below for p.Handle()
-				p.Nvim.AttachBuffer(1, false, map[string]interface{}{})
+				p.Nvim.AttachBuffer(2, false, map[string]interface{}{})
 			})
 		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufAdd", Group: "ExmplNvGoClientGrp", Pattern: "*", Eval: "*"},
 			func(eval *autocmdEvalExample) {

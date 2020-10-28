@@ -343,9 +343,9 @@ The first autocommand created is very simple:
       })
 ```
 
-This will simply log that a buffer was entered into whenever that event is fired by Neovim. In fact, we have 
-already seen this autocommand in action. If you go back and look at the log file excerpt in the previous section
-you will see a line that says:
+This will simply log that a buffer was entered into whenever that event is fired by Neovim. In fact, we have already
+seen this autocommand in action. If you go back and look at the log file from when you ran ExCmd you will see a line
+that says:
 
 ```
 Just entered a buffer
@@ -546,29 +546,30 @@ from a particular buffer. The code for this is up near the top of Main() where t
           func() {
                   log.Print("Just entered a buffer")
                   // this call is paired with the example below for p.Handle()
-                  p.Nvim.AttachBuffer(1, false, map[string]interface{}{})
+                  p.Nvim.AttachBuffer(2, false, map[string]interface{}{})
           })
 ```
 
 Notice the call to p.Nvim.AttachBuffer(). This is what starts the events flowing back to us. Without both calling
 Handle() and AttachBuffer() the callbacks will never be called.
 
-To see this in action simply start up Neovim and start typing. Maybe type a few lines. Then quit.
+To see this in action simply start up Neovim, create a split with a new buffer (it must be a new buffer and it must be
+buffer #2, otherwise the example won't work), and start typing.
 
 The output may look something like this (I typed "hi there" in an empty buffer, then quit):
 
 ```
 Just entered a buffer
-triggered changed tick event []interface {}{1, 2}
-triggered buf lines event []interface {}{1, 3, 0, 1, []interface {}{"h"}, false}
-triggered buf lines event []interface {}{1, 4, 0, 1, []interface {}{"hi"}, false}
-triggered buf lines event []interface {}{1, 5, 0, 1, []interface {}{"hi "}, false}
-triggered buf lines event []interface {}{1, 6, 0, 1, []interface {}{"hi t"}, false}
-triggered buf lines event []interface {}{1, 7, 0, 1, []interface {}{"hi th"}, false}
-triggered buf lines event []interface {}{1, 8, 0, 1, []interface {}{"hi the"}, false}
-triggered buf lines event []interface {}{1, 9, 0, 1, []interface {}{"hi ther"}, false}
-triggered buf lines event []interface {}{1, 10, 0, 1, []interface {}{"hi there"}, false}
-triggered buf lines event []interface {}{1, 11, 0, 1, []interface {}{"hi there", ""}, false}
+triggered changed tick event []interface {}{2, 2}
+triggered buf lines event []interface {}{2, 3, 0, 1, []interface {}{"h"}, false}
+triggered buf lines event []interface {}{2, 4, 0, 1, []interface {}{"hi"}, false}
+triggered buf lines event []interface {}{2, 5, 0, 1, []interface {}{"hi "}, false}
+triggered buf lines event []interface {}{2, 6, 0, 1, []interface {}{"hi t"}, false}
+triggered buf lines event []interface {}{2, 7, 0, 1, []interface {}{"hi th"}, false}
+triggered buf lines event []interface {}{2, 8, 0, 1, []interface {}{"hi the"}, false}
+triggered buf lines event []interface {}{2, 9, 0, 1, []interface {}{"hi ther"}, false}
+triggered buf lines event []interface {}{2, 10, 0, 1, []interface {}{"hi there"}, false}
+triggered buf lines event []interface {}{2, 11, 0, 1, []interface {}{"hi there", ""}, false}
 ```
 
 That's a lot of output, but it is sending an event every time a key is pressed. Notice the tick event near the
