@@ -531,8 +531,8 @@ emitted. It's similar to autocommands, but the events are different and are call
 ui-events which is not covered here but which works in a similar manner. See :help [ui-events](https://neovim.io/doc/user/ui.html#ui-events) for more information.)
 
 The below code attaches to two of the events and logs when they occur along with the arguments that are passed to it.
-To see the logging you must first subscribe to the event stream for the current buffer. This is performed by the two
-newly defined functions: TurnOnEvents and TurnOffEvents.
+To see the logging you must first subscribe to the event stream for the current buffer. This is performed by one of the
+newly defined functions: TurnOnEvents.
 
 ```go
   p.Handle("nvim_buf_lines_event",
@@ -572,7 +572,11 @@ Back in your Vim session you can type all you want but nothing will appear in th
 :call TurnOnEvents()
 ```
 
-you will see a new log line for every character you type.
+you will see a new log line for every character you type. This will be true **only** in the buffer you are currently
+in. If you switch buffers you no longer see anything in the log. However, if you switch back to the previous buffer
+you will again see logging. This is because TurnOnEvents has subscribed to events emitted by one specific buffer.
+If you run TurnOnEvents in another buffer you will start to see logging for that buffer also. That is, you will be
+subscribed to two different buffers sending events.
 
 You can also turn off the stream of events:
 
