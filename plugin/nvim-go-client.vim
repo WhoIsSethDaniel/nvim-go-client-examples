@@ -37,7 +37,6 @@ call remote#host#Register('nvim_go_client_example', 'x', function('s:Start_examp
 call remote#host#RegisterPlugin('nvim_go_client_example', '0', [
 \ {'type': 'autocmd', 'name': 'BufAdd', 'sync': 0, 'opts': {'eval': '{''Cwd'': getcwd()}', 'group': 'ExmplNvGoClientGrp', 'pattern': '*'}},
 \ {'type': 'autocmd', 'name': 'BufEnter', 'sync': 0, 'opts': {'group': 'ExmplNvGoClientGrp', 'pattern': '*'}},
-\ {'type': 'autocmd', 'name': 'VimEnter', 'sync': 0, 'opts': {'group': 'ExmplNvGoClientGrp', 'pattern': '*'}},
 \ {'type': 'command', 'name': 'ExCmd', 'sync': 0, 'opts': {'bang': '', 'eval': '[getcwd(),bufname()]', 'nargs': '?'}},
 \ {'type': 'function', 'name': 'GetVV', 'sync': 1, 'opts': {}},
 \ {'type': 'function', 'name': 'ShowFirst', 'sync': 1, 'opts': {}},

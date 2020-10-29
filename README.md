@@ -91,18 +91,17 @@ The output looks something like this (but may be different if I've added or remo
 
 ```vim
 call remote#host#RegisterPlugin('nvim_go_client_example', '0', [
-\ {'type': 'autocmd', 'name': 'BufAdd', 'sync': 0, 'opts': {'eval': '{''Cwd'': g
+\ {'type': 'autocmd', 'name': 'BufAdd', 'sync': 0, 'opts': {'eval': '{''Cwd'': getcwd()}', 'group': 'ExmplNvGoClientGrp', 'pattern'
 : '*'}},
-\ {'type': 'autocmd', 'name': 'BufEnter', 'sync': 0, 'opts': {'group': 'ExmplNvG
-\ {'type': 'autocmd', 'name': 'VimEnter', 'sync': 0, 'opts': {'group': 'ExmplNvG
-\ {'type': 'command', 'name': 'ExCmd', 'sync': 0, 'opts': {'bang': '', 'eval': '
+\ {'type': 'autocmd', 'name': 'BufEnter', 'sync': 0, 'opts': {'group': 'ExmplNvGoClientGrp', 'pattern': '*'}},
+\ {'type': 'command', 'name': 'ExCmd', 'sync': 0, 'opts': {'bang': '', 'eval': '[getcwd(),bufname()]', 'nargs': '?'}},
 \ {'type': 'function', 'name': 'GetVV', 'sync': 1, 'opts': {}},
 \ {'type': 'function', 'name': 'ShowFirst', 'sync': 1, 'opts': {}},
-\ {'type': 'function', 'name': 'ShowThings', 'sync': 1, 'opts': {'eval': '[getcw
+\ {'type': 'function', 'name': 'ShowThings', 'sync': 1, 'opts': {'eval': '[getcwd(),argc()]'}},
 \ {'type': 'function', 'name': 'TurnOffEvents', 'sync': 0, 'opts': {}},
 \ {'type': 'function', 'name': 'TurnOnEvents', 'sync': 0, 'opts': {}},
 \ {'type': 'function', 'name': 'Upper', 'sync': 1, 'opts': {}},
-\ {'type': 'function', 'name': 'UpperCwd', 'sync': 1, 'opts': {'eval': 'getcwd()
+\ {'type': 'function', 'name': 'UpperCwd', 'sync': 1, 'opts': {'eval': 'getcwd()'}},
 \ ])
 ```
 

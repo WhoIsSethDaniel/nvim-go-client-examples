@@ -21,10 +21,6 @@ func main() {
 			})
 
 		// AutoCommands
-		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "VimEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
-			func() {
-				log.Print("Just entered vim")
-			})
 		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
 			func() {
 				log.Print("Just entered a buffer")
