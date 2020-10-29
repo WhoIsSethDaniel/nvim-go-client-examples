@@ -91,14 +91,18 @@ The output looks something like this (but may be different if I've added or remo
 
 ```vim
 call remote#host#RegisterPlugin('nvim_go_client_example', '0', [
-\ {'type': 'autocmd', 'name': 'BufAdd', 'sync': 0, 'opts': {'eval': '{''Cwd'': getcwd()}', 'group': 'ExmplNvGoClientGrp', 'pattern': '*'}},
-\ {'type': 'autocmd', 'name': 'BufEnter', 'sync': 0, 'opts': {'group': 'ExmplNvGoClientGrp', 'pattern': '*'}},
-\ {'type': 'command', 'name': 'ExCmd', 'sync': 0, 'opts': {'bang': '', 'eval': '[getcwd(),bufname()]', 'nargs': '?'}},
+\ {'type': 'autocmd', 'name': 'BufAdd', 'sync': 0, 'opts': {'eval': '{''Cwd'': g
+: '*'}},
+\ {'type': 'autocmd', 'name': 'BufEnter', 'sync': 0, 'opts': {'group': 'ExmplNvG
+\ {'type': 'autocmd', 'name': 'VimEnter', 'sync': 0, 'opts': {'group': 'ExmplNvG
+\ {'type': 'command', 'name': 'ExCmd', 'sync': 0, 'opts': {'bang': '', 'eval': '
 \ {'type': 'function', 'name': 'GetVV', 'sync': 1, 'opts': {}},
 \ {'type': 'function', 'name': 'ShowFirst', 'sync': 1, 'opts': {}},
-\ {'type': 'function', 'name': 'ShowThings', 'sync': 1, 'opts': {'eval': '[getcwd(),argc()]'}},
+\ {'type': 'function', 'name': 'ShowThings', 'sync': 1, 'opts': {'eval': '[getcw
+\ {'type': 'function', 'name': 'TurnOffEvents', 'sync': 0, 'opts': {}},
+\ {'type': 'function', 'name': 'TurnOnEvents', 'sync': 0, 'opts': {}},
 \ {'type': 'function', 'name': 'Upper', 'sync': 1, 'opts': {}},
-\ {'type': 'function', 'name': 'UpperCwd', 'sync': 1, 'opts': {'eval': 'getcwd()'}},
+\ {'type': 'function', 'name': 'UpperCwd', 'sync': 1, 'opts': {'eval': 'getcwd()
 \ ])
 ```
 
@@ -527,6 +531,8 @@ emitted. It's similar to autocommands, but the events are different and are call
 ui-events which is not covered here but which works in a similar manner. See :help [ui-events](https://neovim.io/doc/user/ui.html#ui-events) for more information.)
 
 The below code attaches to two of the events and logs when they occur along with the arguments that are passed to it.
+To see the logging you must first subscribe to the event stream for the current buffer. This is performed by the two
+newly defined functions: TurnOnEvents and TurnOffEvents.
 
 ```go
   p.Handle("nvim_buf_lines_event",
@@ -537,40 +543,63 @@ The below code attaches to two of the events and logs when they occur along with
           func(e ...interface{}) {
                   log.Printf("triggered changed tick event %#v", e)
           })
+  // these functions are used to demo the turning off/on of
+  // buffer events
+  p.HandleFunction(&plugin.FunctionOptions{Name: "TurnOffEvents"},
+          func() {
+                  log.Print("calling TurnOffEvents")
+                  buffer, _ := p.Nvim.CurrentBuffer()
+                  p.Nvim.DetachBuffer(buffer)
+          })
+  p.HandleFunction(&plugin.FunctionOptions{Name: "TurnOnEvents"},
+          func() {
+                  log.Print("calling TurnOnEvents")
+                  buffer, _ := p.Nvim.CurrentBuffer()
+                  p.Nvim.AttachBuffer(buffer, false, map[string]interface{}{})
+          })
 ```
 
-You can't simply call p.Handle and have the events start appearing. You have to use nvim.AttachBuffer() to get events
-from a particular buffer. The code for this is up near the top of Main() where the BufEnter autocommand was defined:
+To see this in action it is best to be tailing the log file in a separate terminal. So once you start Vim you should
+tail the log file:
 
-```go
-  p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
-          func() {
-                  log.Print("Just entered a buffer")
-                  // this call is paired with the example below for p.Handle()
-                  p.Nvim.AttachBuffer(2, false, map[string]interface{}{})
-          })
+```
+tail -f nvim-go-client-example.log
+```
+
+Back in your Vim session you can type all you want but nothing will appear in the log file. However, once you run
+
+```
+:call TurnOnEvents()
+```
+
+you will see a new log line for every character you type.
+
+You can also turn off the stream of events:
+
+```
+:call TurnOffEvents()
 ```
 
 Notice the call to p.Nvim.AttachBuffer(). This is what starts the events flowing back to us. Without both calling
 Handle() and AttachBuffer() the callbacks will never be called.
 
-To see this in action simply start up Neovim, create a split with a new buffer (it must be a new buffer and it must be
-buffer #2, otherwise the example won't work), and start typing.
+Also notice that we used another nvim API call: CurrentBuffer(). This does what you'd probably expect, it returns
+an identifier for the currently active buffer. This is the first argument to each of DetachBuffer() and AttachBuffer().
 
-The output may look something like this (I typed "hi there" in an empty buffer, then quit):
-
+The output may look something like this (after turning events on, I typed "hi there" in an empty buffer, then quit):
 ```
-Just entered a buffer
-triggered changed tick event []interface {}{2, 2}
-triggered buf lines event []interface {}{2, 3, 0, 1, []interface {}{"h"}, false}
-triggered buf lines event []interface {}{2, 4, 0, 1, []interface {}{"hi"}, false}
-triggered buf lines event []interface {}{2, 5, 0, 1, []interface {}{"hi "}, false}
-triggered buf lines event []interface {}{2, 6, 0, 1, []interface {}{"hi t"}, false}
-triggered buf lines event []interface {}{2, 7, 0, 1, []interface {}{"hi th"}, false}
-triggered buf lines event []interface {}{2, 8, 0, 1, []interface {}{"hi the"}, false}
-triggered buf lines event []interface {}{2, 9, 0, 1, []interface {}{"hi ther"}, false}
-triggered buf lines event []interface {}{2, 10, 0, 1, []interface {}{"hi there"}, false}
-triggered buf lines event []interface {}{2, 11, 0, 1, []interface {}{"hi there", ""}, false}
+
+[...]
+triggered changed tick event []interface {}{1, 2}
+triggered buf lines event []interface {}{1, 3, 0, 1, []interface {}{"h"}, false}
+triggered buf lines event []interface {}{1, 4, 0, 1, []interface {}{"hi"}, false}
+triggered buf lines event []interface {}{1, 5, 0, 1, []interface {}{"hi "}, false}
+triggered buf lines event []interface {}{1, 6, 0, 1, []interface {}{"hi t"}, false}
+triggered buf lines event []interface {}{1, 7, 0, 1, []interface {}{"hi th"}, false}
+triggered buf lines event []interface {}{1, 8, 0, 1, []interface {}{"hi the"}, false}
+triggered buf lines event []interface {}{1, 9, 0, 1, []interface {}{"hi ther"}, false}
+triggered buf lines event []interface {}{1, 10, 0, 1, []interface {}{"hi there"}, false}
+triggered buf lines event []interface {}{1, 11, 0, 1, []interface {}{"hi there", ""}, false}
 ```
 
 That's a lot of output, but it is sending an event every time a key is pressed. Notice the tick event near the

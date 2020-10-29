@@ -28,8 +28,6 @@ func main() {
 		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufEnter", Group: "ExmplNvGoClientGrp", Pattern: "*"},
 			func() {
 				log.Print("Just entered a buffer")
-				// this call is paired with the example below for p.Handle()
-				p.Nvim.AttachBuffer(2, false, map[string]interface{}{})
 			})
 		p.HandleAutocmd(&plugin.AutocmdOptions{Event: "BufAdd", Group: "ExmplNvGoClientGrp", Pattern: "*", Eval: "*"},
 			func(eval *autocmdEvalExample) {
@@ -73,10 +71,21 @@ func main() {
 			func(e ...interface{}) {
 				log.Printf("triggered changed tick event %#v", e)
 			})
+		// these functions are used to demo the turning off/on of
+		// buffer events
+		p.HandleFunction(&plugin.FunctionOptions{Name: "TurnOffEvents"},
+			func() {
+				log.Print("calling TurnOffEvents")
+				buffer, _ := p.Nvim.CurrentBuffer()
+				p.Nvim.DetachBuffer(buffer)
+			})
+		p.HandleFunction(&plugin.FunctionOptions{Name: "TurnOnEvents"},
+			func() {
+				log.Print("calling TurnOnEvents")
+				buffer, _ := p.Nvim.CurrentBuffer()
+				p.Nvim.AttachBuffer(buffer, false, map[string]interface{}{})
+			})
 
 		return nil
 	})
-
-	// Generic handler (see :h events) p.Handle() takes an event name followed by a function that responds when that
-	// event is triggered
 }
