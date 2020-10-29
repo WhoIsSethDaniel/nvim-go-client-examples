@@ -61,8 +61,8 @@ func main() {
 				return showfirst(p), nil
 			})
 
-		// Special events (see :h api-buffer-updates for more);
-		// these special p.Handle events are paired with the call to Subscribe above
+		// Buffer events (see :h api-buffer-updates for more); these special p.Handle events are
+		// paired with the call to AttachBuffer in TurnOnEvents below
 		p.Handle("nvim_buf_lines_event",
 			func(e ...interface{}) {
 				log.Printf("triggered buf lines event %#v", e)

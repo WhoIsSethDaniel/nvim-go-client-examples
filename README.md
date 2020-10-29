@@ -591,8 +591,8 @@ Also notice that we used another nvim API call: CurrentBuffer(). This does what 
 an identifier for the currently active buffer. This is the first argument to each of DetachBuffer() and AttachBuffer().
 
 The output may look something like this (after turning events on, I typed "hi there" in an empty buffer, then quit):
-```
 
+```
 [...]
 triggered changed tick event []interface {}{1, 2}
 triggered buf lines event []interface {}{1, 3, 0, 1, []interface {}{"h"}, false}
