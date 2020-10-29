@@ -491,7 +491,7 @@ all documented in :help [command-complete](https://neovim.io/doc/user/map.html#:
 For a customlist function you simply return a slice of strings with the completion items. In the example above the 
 return value was hardcoded.
 
-To see the completion in action simply startup Neovim, type ':CompleteThis ' (note the space at the end) and hit <tab>.
+To see the completion in action simply startup Neovim, type ':CompleteThis ' (note the space at the end) and hit \<tab\>.
 You should see a little box popup and display the completion elements. If you examine the log it will say something
 like:
 
