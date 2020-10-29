@@ -57,6 +57,20 @@ func main() {
 				return showfirst(p), nil
 			})
 
+		// Command Completion
+		p.HandleCommand(&plugin.CommandOptions{Name: "CompleteThis", NArgs: "?", Complete: "customlist,CompleteThisC"},
+			func() {
+				log.Print("called command CompleteThis")
+			})
+		p.HandleFunction(&plugin.FunctionOptions{Name: "CompleteThisC"},
+			func(c *CompletionArgs) ([]string, error) {
+				log.Print("called CompleteThisC")
+				log.Printf("  arg lead: %s", c.ArgLead)
+				log.Printf("  cmdline: %s", c.CmdLine)
+				log.Printf("  cursorposstring: %d", c.CursorPosString)
+				return []string{"abc", "def", "ghi", "jkl"}, nil
+			})
+
 		// Buffer events (see :h api-buffer-updates for more); these special p.Handle events are
 		// paired with the call to AttachBuffer in TurnOnEvents below
 		p.Handle("nvim_buf_lines_event",

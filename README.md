@@ -459,9 +459,54 @@ calling Upper
 
 Feel free to also run UpperCwd and ShowThings. Look at the code, see what each one does, and then run it.
 
+#### Completion Functions
+
+The example code will now create a command completion function. First it creates a simple command named 'CompleteThis'.
+It fills in the 'Complete' field with the exact same thing you'd use if you were defining it via Vimscript. It names
+a function called 'CompleteThisC' which is defined using Go.
+
+```go
+  p.HandleCommand(&plugin.CommandOptions{Name: "CompleteThis", NArgs: "?", Complete: "customlist,CompleteThisC"},
+          func() {
+                  log.Print("called command CompleteThis")
+          })
+  p.HandleFunction(&plugin.FunctionOptions{Name: "CompleteThisC"},
+          func(c *CompletionArgs) ([]string, error) {
+                  log.Print("called CompleteThisC")
+                  log.Printf("  arg lead: %s", c.ArgLead)
+                  log.Printf("  cmdline: %s", c.CmdLine)
+                  log.Printf("  cursorposstring: %d", c.CursorPosString)
+                  return []string{"abc", "def", "ghi", "jkl"}, nil
+          })
+```
+
+Note that the anonymous function takes a single argument with a type of \*CompletionArgs. In the 'nvim' package there
+is a type named CommandCompletionArgs unfortunately the third element in that struct has the wrong type and if you use
+it you'll consistently get an error about converting 'int to string'. So, instead, the functions.go file defines this
+new type where the third element is an int. Once this bug in go-client is fixed I'll update this doc. 
+
+The CompletionArgs struct defines exactly what gets passed in to a typical Vimscript completion function and this is
+all documented in :help [command-complete](https://neovim.io/doc/user/map.html#:command-complete).
+
+For a customlist function you simply return a slice of strings with the completion items. In the example above the 
+return value was hardcoded.
+
+To see the completion in action simply startup Neovim, type ':CompleteThis ' (note the space at the end) and hit <tab>.
+You should see a little box popup and display the completion elements. If you examine the log it will say something
+like:
+
+```
+Just entered a buffer
+called CompleteThisC
+  arg lead: 
+  cmdline: CompleteThis 
+  cursorposstring: 13
+```
+
 #### NVim API
 
 ##### Retrieving Vim Variables
+
 The 'GetVV' function does something a little interesting. It uses the nvim API provided by go-plugin. The nvim API is
 pretty large, but you can look at it using go doc:
 
