@@ -481,10 +481,10 @@ called 'CompleteThisC' which is defined using Go.
           })
 ```
 
-Note that the anonymous function takes a single argument with a type of \*CompletionArgs. In the 'nvim' package there
-is a type named CommandCompletionArgs unfortunately the third element in that struct has the wrong type and if you use
-it you'll consistently get an error about converting 'int to string'. So, instead, the functions.go file defines this
-new type where the third element is an int. Once this bug in go-client is fixed I'll update this doc. 
+Note that the anonymous function takes a single argument with a type of \*CompletionArgs. In the 'nvim' package there is
+a type named struct CommandCompletionArgs. Unfortunately the third element in that struct has the wrong type and if you
+use it you'll consistently get an error about converting 'int to string'. So, instead, the functions.go file defines
+this new type where the third element is an int. Once this bug in go-client is fixed I'll update this doc. 
 
 The CompletionArgs struct defines exactly what gets passed in to a typical Vimscript completion function and this is
 all documented in :help [command-complete](https://neovim.io/doc/user/map.html#:command-complete).
