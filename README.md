@@ -462,8 +462,9 @@ Feel free to also run UpperCwd and ShowThings. Look at the code, see what each o
 #### Completion Functions
 
 The example code will now create a command completion function. First it creates a simple command named 'CompleteThis'.
-It fills in the 'Complete' field with the exact same thing you'd use if you were defining it via Vimscript. It names
-a function called 'CompleteThisC' which is defined using Go.
+It fills in the 'Complete' field with the exact same thing you'd use if you were defining it via Vimscript. (see :help
+[command-complete](https://neovim.io/doc/user/map.html#:command-completion-customlist) for more information) It names a function
+called 'CompleteThisC' which is defined using Go.
 
 ```go
   p.HandleCommand(&plugin.CommandOptions{Name: "CompleteThis", NArgs: "?", Complete: "customlist,CompleteThisC"},
