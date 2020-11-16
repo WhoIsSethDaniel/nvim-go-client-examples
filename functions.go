@@ -9,12 +9,6 @@ import (
 	"github.com/neovim/go-client/nvim/plugin"
 )
 
-type CompletionArgs struct {
-	ArgLead         string `msgpack:",array"`
-	CmdLine         string
-	CursorPosString int
-}
-
 func upper(p *plugin.Plugin, in string) string {
 	return strings.ToUpper(in)
 }

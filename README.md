@@ -472,7 +472,7 @@ called 'CompleteThisC' which is defined using Go.
                   log.Print("called command CompleteThis")
           })
   p.HandleFunction(&plugin.FunctionOptions{Name: "CompleteThisC"},
-          func(c *CompletionArgs) ([]string, error) {
+          func(c *nvim.CommandCompletionArgs) ([]string, error) {
                   log.Print("called CompleteThisC")
                   log.Printf("  arg lead: %s", c.ArgLead)
                   log.Printf("  cmdline: %s", c.CmdLine)
@@ -481,13 +481,9 @@ called 'CompleteThisC' which is defined using Go.
           })
 ```
 
-Note that the anonymous function takes a single argument with a type of \*CompletionArgs. In the 'nvim' package there is
-a type named struct CommandCompletionArgs. Unfortunately the third element in that struct has the wrong type and if you
-use it you'll consistently get an error about converting 'int to string'. So, instead, the functions.go file defines
-this new type where the third element is an int. Once this bug in go-client is fixed I'll update this doc. 
-
-The CompletionArgs struct defines exactly what gets passed in to a typical Vimscript completion function and this is
-all documented in :help [command-complete](https://neovim.io/doc/user/map.html#:command-complete).
+Note that the anonymous function takes a single argument with a type of \*nvim.CommandCompletionArgs. The CommandCompletionArgs
+struct defines exactly what gets passed in to a typical Vimscript completion function and this is all documented in
+:help [command-complete](https://neovim.io/doc/user/map.html#:command-complete).
 
 For a customlist function you simply return a slice of strings with the completion items. In the example above the 
 return value was hardcoded.

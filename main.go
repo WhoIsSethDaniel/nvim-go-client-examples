@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/neovim/go-client/nvim"
 	"github.com/neovim/go-client/nvim/plugin"
 )
 
@@ -63,7 +64,7 @@ func main() {
 				log.Print("called command CompleteThis")
 			})
 		p.HandleFunction(&plugin.FunctionOptions{Name: "CompleteThisC"},
-			func(c *CompletionArgs) ([]string, error) {
+			func(c *nvim.CommandCompletionArgs) ([]string, error) {
 				log.Print("called CompleteThisC")
 				log.Printf("  arg lead: %s", c.ArgLead)
 				log.Printf("  cmdline: %s", c.CmdLine)
